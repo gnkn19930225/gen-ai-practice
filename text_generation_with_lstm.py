@@ -1,4 +1,9 @@
+# %%
 import numpy as np
+
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras.layers import TextVectorization
 
 def reweight_distribution(original_distribution, temperature=0.5):
     """
@@ -31,3 +36,28 @@ def reweight_distribution(original_distribution, temperature=0.5):
 
     # 步驟 3: 正規化，使概率總和為 1
     return distribution / np.sum(distribution)
+
+
+def prepare_lm_dataset(text_batch):
+    vectorized_sequences = text_vectorization(text_batch)
+    x = vectorized_sequences[:, :-1]
+    y = vectorized_sequences[:, 1:]
+    return x, y
+
+
+sequence_length = 100
+vocab_size = 15000
+
+
+dataset = keras.utils.text_dataset_from_directory(
+    directory="aclImdb", label_mode=None, batch_size=256)
+dataset = dataset.map(lambda x: tf.strings.regex_replace(x, "<br />", " "))
+
+text_vectorization = TextVectorization(
+    max_tokens=vocab_size,  # 限制詞彙表大小，避免無止境擴張
+    output_mode="int",  # 將文字轉成整數索引序列方便後續模型使用
+    output_sequence_length=sequence_length,  # 固定序列長度以便批次處理
+)
+
+text_vectorization.adapt(dataset)
+lm_dataset = dataset.map(prepare_lm_dataset, num_parallel_calls=4)
