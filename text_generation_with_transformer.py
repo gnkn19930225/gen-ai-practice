@@ -68,12 +68,12 @@ class TextGenerator(keras.callbacks.Callback):
         if (epoch + 1) % self.print_freq != 0:
             return
         for temperature in self.temperatures:
-            print("== Generating with temperature", temperature)
+            print("\n== Generating with temperature", temperature)
             sentence = self.prompt
             for i in range(self.generate_length):
                 tokenized_sentence = text_vectorization([sentence])
                 predictions = self.model(tokenized_sentence)
-                next_token = sample_next(predictions[0, i, :])
+                next_token = sample_next(predictions[0, i, :], temperature=temperature)
                 sampled_token = tokens_index[next_token]
                 sentence += " " + sampled_token
             print(sentence)
